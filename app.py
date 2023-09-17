@@ -44,7 +44,7 @@ def clean_emg(src_path: str):
             dtype={"Time,s": float, "FLEX.CARP.R,uV": float, "MED. GASTRO,uV": float},
         )
 
-        df.rename({"Time,s": "time(s)", "FLEX.CARP.R,uV": "근전도(팔,수근굴근)(uV)", "MED. GASTRO,uV": "근전도(종아리,비복근)(uV)"})
+        df.rename({"Time,s": "time(s)", "FLEX.CARP.R,uV": "근전도(팔,수근굴근)(uV)", "MED. GASTRO,uV": "근전도(종아리,비복근)(uV)"}, inplace=True)
 
         max_time = int(df.index.max())
         
@@ -69,8 +69,9 @@ def plot_eeg(src_path: str):
         wb = load_workbook(file_path)
         ws = wb.active
 
+        # ARM
         c1 = LineChart()
-        c1.title = f"피실험자{subject_number} 시나리오{scenario_number}"
+        c1.title = f"피실험자{subject_number} 시나리오{scenario_number} 근전도(팔,수근굴근)"
         c1.x_axis.title = "time(s)"
         c1.x_axis.tickLblSkip = 200
         c1.x_axis.tickLblPos = "low"
@@ -79,11 +80,9 @@ def plot_eeg(src_path: str):
                                     p=[Paragraph(pPr=ParagraphProperties(
                                         defRPr=CharacterProperties()), endParaRPr=CharacterProperties())]
                                     )
-        c1.y_axis.scaling.min = None
-        c1.y_axis.scaling.max = None
+        c1.y_axis.scaling.min = 0
+        c1.y_axis.scaling.max = 250
         c1.y_axis.title = "근전도(팔,수근굴근)(uV)"
-
-
         c1.legend = None
 
         arm_data = Reference(ws, min_col=2, max_col=2,
@@ -91,20 +90,55 @@ def plot_eeg(src_path: str):
 
         label = Reference(ws, min_col=1, max_col=1,
                             min_row=2, max_row=ws.max_row)
+
+
+
         c1.add_data(arm_data)
         c1.set_categories(label)
         c1.series[0].graphicalProperties.line.width = pixels_to_EMU(1)
-
-
+        c1.width = 20
 
         ws.add_chart(c1, f"{get_column_letter(5)}{2}")
 
+        # LEG
 
-        wb.save(f"{EMG_XLSX_WITH_CHARTS_DIR}/{file_path.stem}.xlsx")
+        c2 = LineChart()
+        c2.title = f"피실험자{subject_number} 시나리오{scenario_number} 근전도(종아리,비복근)"
+        c2.x_axis.title = "time(s)"
+        c2.x_axis.tickLblSkip = 200
+        c2.x_axis.tickLblPos = "low"
+        c2.x_axis.txPr = RichText(bodyPr=RichTextProperties(anchor="ctr", anchorCtr="1", rot="-2700000",
+                                                            spcFirstLastPara="1", vertOverflow="ellipsis", wrap="square"),
+                                    p=[Paragraph(pPr=ParagraphProperties(
+                                        defRPr=CharacterProperties()), endParaRPr=CharacterProperties())]
+                                    )
+        c2.y_axis.scaling.min = 0
+        c2.y_axis.scaling.max = 250
+        c2.y_axis.title = "근전도(종아리,비복근)(uV)"
+
+
+        c2.legend = None
+
+        label = Reference(ws, min_col=1, max_col=1,
+                            min_row=2, max_row=ws.max_row)
         
-
         leg_data = Reference(ws, min_col=3, max_col=3,
                                  min_row=2, max_row=ws.max_row)
+        
+        c2.add_data(leg_data)
+        c2.set_categories(label)
+        c2.series[0].graphicalProperties.line.width = pixels_to_EMU(1)
+        c2.width = 20
+
+
+
+        ws.add_chart(c2, f"{get_column_letter(5)}{15}")
+
+
+        wb.save(f"{EMG_XLSX_WITH_CHARTS_DIR}/{file_path.stem}.xlsx")
+
+    print("ALL DONE👍👍👍👍👍👍👍👍")
+        
 
 
 def export_image():
