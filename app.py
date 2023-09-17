@@ -4,8 +4,9 @@ from sylk_parser import SylkParser
 import pandas as pd
 from win32com.client import Dispatch
 from openpyxl import load_workbook
-from openpyxl.utils import get_column_letter
 from openpyxl.chart.text import RichText
+from openpyxl.utils import get_column_letter
+from openpyxl.utils.units import pixels_to_EMU
 from openpyxl.chart.reference import Reference
 from openpyxl.chart.line_chart import LineChart
 from openpyxl.drawing.text import RichTextProperties, Paragraph, ParagraphProperties, CharacterProperties
@@ -67,13 +68,11 @@ def plot_eeg(src_path: str):
 
         wb = load_workbook(file_path)
         ws = wb.active
-        chart_sheet = wb.create_sheet("chart", index=0)
 
         c1 = LineChart()
         c1.title = f"피실험자{subject_number} 시나리오{scenario_number}"
-        c1.style = wb.index(ws)
         c1.x_axis.title = "time(s)"
-        c1.x_axis.tickLblSkip = 10
+        c1.x_axis.tickLblSkip = 200
         c1.x_axis.tickLblPos = "low"
         c1.x_axis.txPr = RichText(bodyPr=RichTextProperties(anchor="ctr", anchorCtr="1", rot="-2700000",
                                                             spcFirstLastPara="1", vertOverflow="ellipsis", wrap="square"),
@@ -94,31 +93,34 @@ def plot_eeg(src_path: str):
                             min_row=2, max_row=ws.max_row)
         c1.add_data(arm_data)
         c1.set_categories(label)
+        c1.series[0].graphicalProperties.line.width = pixels_to_EMU(1)
+
 
 
         ws.add_chart(c1, f"{get_column_letter(5)}{2}")
 
 
-        wb.save(f"EMG_XLSX_WITH_CHARTS_DIR/{file_path.stem}.xlsx")
+        wb.save(f"{EMG_XLSX_WITH_CHARTS_DIR}/{file_path.stem}.xlsx")
+        
 
         leg_data = Reference(ws, min_col=3, max_col=3,
                                  min_row=2, max_row=ws.max_row)
 
 
-# def export_image():
-#     app = Dispatch("Excel.Application")
-#     # It's important to use the absolute path, it won't work with a relative one.
-#     workbook = app.Workbooks.Open(Filename=workbook_file_name)
+def export_image():
+    app = Dispatch("Excel.Application")
+    # It's important to use the absolute path, it won't work with a relative one.
+    workbook = app.Workbooks.Open(Filename=workbook_file_name)
 
-#     app.DisplayAlerts = False
+    app.DisplayAlerts = False
 
-#     for i, sheet in enumerate(workbook.Worksheets):
-#         for chartObject in sheet.ChartObjects():
-#             print(sheet.Name + ':' + chartObject.Name)
-#             # It's important to use the absolute path, it won't work with a relative one.
-#             chartObject.Chart.Export(str(pathlib.Path().resolve()) + "\chart" + str(i+1) + ".png")
+    for i, sheet in enumerate(workbook.Worksheets):
+        for chartObject in sheet.ChartObjects():
+            print(sheet.Name + ':' + chartObject.Name)
+            # It's important to use the absolute path, it won't work with a relative one.
+            chartObject.Chart.Export(str(pathlib.Path().resolve()) + "\chart" + str(i+1) + ".png")
 
-#     workbook.Close(SaveChanges=False, Filename=workbook_file_name)
+    workbook.Close(SaveChanges=False, Filename=workbook_file_name)
 
 
 # sylk_to_csv(emg_sylk_src_path)
